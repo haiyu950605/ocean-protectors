@@ -1,0 +1,496 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ocean Protectors — Advanced Kids Edition</title>
+  <style>
+    :root{ --sea:#58c7e3; --deep:#036280; --accent:#ff7aa2; --card:#ffffffcc }
+    *{box-sizing:border-box}
+    body{font-family: 'Poppins', 'Arial', sans-serif; margin:0; background:linear-gradient(180deg,#bfefff 0%, #f0fbff 100%); color:var(--deep)}
+    header{background:linear-gradient(90deg,var(--sea),#9be3ff); padding:18px 12px; text-align:center; box-shadow:0 6px 18px rgba(3,94,120,0.12)}
+    header h1{margin:0; font-size:24px; letter-spacing:0.5px}
+    header p{margin:6px 0 0; color:rgba(3,94,120,0.9)}
+    nav{display:flex; gap:10px; justify-content:center; padding:12px;}
+    nav button{border:none; padding:10px 14px; border-radius:999px; background:var(--card); cursor:pointer; box-shadow:0 4px 10px rgba(3,94,120,0.08)}
+    nav button.active{background:var(--accent); color:white; transform:translateY(-3px)}
+    main{max-width:1100px; margin:18px auto; padding:0 12px}
+    .section{display:none;}
+    .section.active{display:block}
+    .row{display:flex; gap:12px; align-items:flex-start}
+    .card{background:var(--card); border-radius:14px; padding:14px; box-shadow:0 6px 18px rgba(3,94,120,0.06)}
+    .left{flex:1}
+    .right{width:360px}
+    h2{margin:6px 0 10px}
+    small{color:rgba(3,94,120,0.6)}
+
+    /* Word Match (game 1) styles */
+    .match-board{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px}
+    .slot{height:100px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:28px; border:3px dashed rgba(3,94,120,0.15)}
+    .cards{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+    .word-card{padding:10px 12px; background:linear-gradient(180deg,#fff,#f6fbff); border-radius:10px; cursor:grab; box-shadow:0 6px 12px rgba(3,94,120,0.06)}
+    .hint{background:#fff3; border-radius:8px; padding:8px; font-size:14px}
+
+    /* Game 2 sea area */
+    #seaArea{position:relative; height:320px; border-radius:12px; overflow:hidden; background:linear-gradient(180deg,#8de0ff,#4fc3f7); box-shadow:inset 0 -30px 40px rgba(3,94,120,0.08)}
+    .float{position:absolute; font-size:28px; user-select:none}
+    .animal{filter:drop-shadow(0 6px 8px rgba(0,0,0,0.12));}
+
+    /* Game 3 sentence builder */
+    .prompt{font-weight:600}
+    .tile{display:inline-block; padding:8px 10px; margin:6px; background:#fff; border-radius:10px; cursor:pointer; box-shadow:0 6px 12px rgba(3,94,120,0.06)}
+    .dropzone{min-height:48px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; padding:8px; border:2px dashed rgba(3,94,120,0.08); border-radius:10px}
+
+    /* Progress & certificate */
+    .status{display:flex; gap:8px; align-items:center; justify-content:space-between}
+    .progress{height:12px; background:#e6f7fb; border-radius:999px; overflow:hidden}
+    .progress > span{display:block; height:100%; background:linear-gradient(90deg,var(--accent),#ffd36e); width:0%}
+
+    /* modal */
+    .modal{position:fixed; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; padding:20px; z-index:40}
+    .dialog{background:white; padding:18px; border-radius:12px; width:100%; max-width:560px; box-shadow:0 8px 26px rgba(3,94,120,0.18)}
+
+    /* teacher worksheet */
+    .teacher{font-size:14px}
+
+    footer{margin:30px 0 60px; text-align:center; color:rgba(3,94,120,0.6)}
+
+    /* small responsive */
+    @media (max-width:900px){.row{flex-direction:column}.right{width:100%}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ocean Protectors — Advanced Kids Edition</h1>
+    <p>Learn English words & ocean science while playing — for upper elementary learners</p>
+  </header>
+
+  <nav>
+    <button class="active" data-target="game1">Word Detective</button>
+    <button data-target="game2">Rescue Mission</button>
+    <button data-target="game3">Beach Builder</button>
+    <button data-target="teacher">Teacher Packet</button>
+  </nav>
+
+  <main>
+    <!-- Top status area -->
+    <section class="card status" style="margin-bottom:14px;">
+      <div style="display:flex;gap:12px;align-items:center">
+        <label style="font-weight:600">Player:</label>
+        <input id="playerName" placeholder="Type your name" style="padding:8px 10px;border-radius:8px;border:1px solid #cde" />
+        <button id="resetBtn">Reset</button>
+      </div>
+      <div style="width:55%">
+        <div style="display:flex;justify-content:space-between"><small>Progress</small><small id="scoreLabel">Score: 0</small></div>
+        <div class="progress"><span id="progressBar"></span></div>
+      </div>
+    </section>
+
+    <!-- GAME 1: Word Detective -->
+    <section id="game1" class="section active card">
+      <div class="row">
+        <div class="left">
+          <h2>🔎 Word Detective — Match words to pictures</h2>
+          <small>Drag the word cards to the matching picture. Try to finish quickly for a higher score.</small>
+
+          <div class="match-board" id="matchBoard"></div>
+
+          <div class="cards" id="wordCards"></div>
+
+          <div style="margin-top:8px; display:flex; gap:8px; align-items:center">
+            <button id="startMatch">Start Round</button>
+            <button id="hintBtn">Hint</button>
+            <div class="hint" id="matchHint">Try matching: what floats? what is an animal?</div>
+          </div>
+          <p id="matchFeedback"></p>
+        </div>
+        <aside class="right">
+          <div class="card">
+            <h3>Round info</h3>
+            <p><small>Round length: 45 seconds. Get +10 points per correct pair; +bonus for fast completion.</small></p>
+            <p><strong>Objectives</strong></p>
+            <ol>
+              <li>Read each word (English) aloud.</li>
+              <li>Think about meaning and match to emoji picture.</li>
+              <li>Use hint if stuck (gives first letter).</li>
+            </ol>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- GAME 2: Rescue Mission -->
+    <section id="game2" class="section card">
+      <div class="row">
+        <div class="left">
+          <h2>🚑 Rescue Mission — Save animals & answer questions</h2>
+          <small>Click an animal to rescue it. Answer a short English question to earn points.</small>
+          <div id="seaArea" style="margin-top:12px"></div>
+          <div style="margin-top:8px"><button id="startRescue">Start Mission</button> <button id="stopRescue">Stop</button></div>
+          <p id="rescueMsg"></p>
+        </div>
+        <aside class="right">
+          <div class="card">
+            <h3>Learning Goals</h3>
+            <ul>
+              <li>Read simple English questions about animals</li>
+              <li>Choose correct answer to learn habitat & food</li>
+              <li>Practice short reading comprehension</li>
+            </ul>
+            <p><strong>Tips:</strong> Read the question carefully. If wrong, try again!</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- GAME 3: Beach Builder -->
+    <section id="game3" class="section card">
+      <div class="row">
+        <div class="left">
+          <h2>🏖️ Beach Builder — Make correct sentences</h2>
+          <small>Drag word tiles to the sentence area to form a correct English sentence that describes an action to protect the ocean.</small>
+
+          <div style="margin-top:12px">
+            <p class="prompt">Prompt: <strong>"I _____ the beach."</strong> (choose a verb)</p>
+            <div class="dropzone" id="dropSentence"></div>
+
+            <div id="wordTiles" style="margin-top:12px"></div>
+
+            <div style="margin-top:10px"><button id="checkSentence">Check Sentence</button> <button id="newPrompt">New Prompt</button></div>
+            <p id="sentenceFeedback"></p>
+          </div>
+        </div>
+        <aside class="right">
+          <div class="card">
+            <h3>Skills practiced</h3>
+            <ol>
+              <li>Simple subject + verb sentence structure</li>
+              <li>Vocabulary (verbs and nouns related to clean-up)</li>
+              <li>Speaking: read your sentence aloud</li>
+            </ol>
+            <p><small>Teachers: include follow-up where students write one sentence in their notebooks.</small></p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- TEACHER PACKET -->
+    <section id="teacher" class="section card">
+      <h2>📚 Teacher Packet</h2>
+      <div class="teacher">
+        <h3>Printable worksheet (click to open)</h3>
+        <button id="printWorksheet">Open Worksheet</button>
+        <h3 style="margin-top:12px">Contents</h3>
+        <ul>
+          <li>Vocabulary list (with simple definitions)</li>
+          <li>Answer keys for Word Detective & Rescue questions</li>
+          <li>Discussion prompts & extension activities</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal for quiz questions & certificate -->
+  <div id="modal" class="modal" style="display:none">
+    <div class="dialog" id="modalDialog"></div>
+  </div>
+
+  <footer>
+    <small>Made for classroom use • Print the worksheet for offline activities</small>
+  </footer>
+
+  <script>
+    /***********************
+      App state & helper
+    ************************/ 
+    const navBtns = document.querySelectorAll('nav button');
+    const sections = document.querySelectorAll('.section');
+    const scoreLabel = document.getElementById('scoreLabel');
+    const progressBar = document.getElementById('progressBar');
+    let totalScore = 0;
+    let currentPlayer = '';
+    let rescueInterval = null;
+
+    function setActiveSection(id){
+      sections.forEach(s=>s.classList.toggle('active', s.id===id));
+      navBtns.forEach(b=>b.classList.toggle('active', b.dataset.target===id));
+      // stop rescue spawn when leaving rescue tab
+      if(id!=='game2') stopRescue();
+    }
+    navBtns.forEach(b=>b.addEventListener('click', ()=>setActiveSection(b.dataset.target)));
+
+    document.getElementById('playerName').addEventListener('input', e=>{ currentPlayer = e.target.value });
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      if(confirm('Reset score and progress?')){ totalScore=0; updateStatus(); location.reload(); }
+    });
+
+    function updateStatus(){
+      scoreLabel.innerText = `Score: ${totalScore}`;
+      const pct = Math.min(100, totalScore/2); // arbitrary scaling
+      progressBar.style.width = pct + '%';
+    }
+
+    function playTone(type){
+      try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = type==='ok'?880:220;
+        o.connect(g); g.connect(ctx.destination);
+        o.start(); g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.05, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+        setTimeout(()=>{ o.stop(); ctx.close();}, 350);
+      }catch(e){/* no audio */}
+    }
+
+    /***********************
+      GAME 1 — Word Detective
+    ************************/ 
+    const items = [
+      {id:'bottle', emoji:'🥤', word:'plastic bottle'},
+      {id:'turtle', emoji:'🐢', word:'sea turtle'},
+      {id:'coral', emoji:'🪸', word:'coral'},
+      {id:'net', emoji:'🪢', word:'fishing net'},
+      {id:'bag', emoji:'🛍️', word:'plastic bag'},
+      {id:'can', emoji:'🥫', word:'metal can'}
+    ];
+
+    const matchBoard = document.getElementById('matchBoard');
+    const wordCards = document.getElementById('wordCards');
+    const startMatch = document.getElementById('startMatch');
+    const hintBtn = document.getElementById('hintBtn');
+    const matchHint = document.getElementById('matchHint');
+    const matchFeedback = document.getElementById('matchFeedback');
+    let matchTimer = null; let matchTimeLeft = 45; let matchesDone = 0;
+
+    function shuffle(a){ return a.sort(()=>Math.random()-0.5) }
+
+    function renderMatchBoard(){
+      matchBoard.innerHTML = '';
+      const slots = shuffle([...items]);
+      slots.forEach(it=>{
+        const div = document.createElement('div');
+        div.className='slot'; div.dataset.id = it.id; div.innerHTML = `<div style="text-align:center"><div style='font-size:36px'>${it.emoji}</div><div style='font-size:12px;margin-top:6px'>?</div></div>`;
+        div.addEventListener('dragover', e=>e.preventDefault());
+        div.addEventListener('drop', onDropToSlot);
+        matchBoard.appendChild(div);
+      });
+    }
+
+    function renderWordCards(){
+      wordCards.innerHTML='';
+      const shuffled = shuffle([...items]);
+      shuffled.forEach(it=>{
+        const c = document.createElement('div'); c.className='word-card'; c.draggable = true; c.dataset.id = it.id; c.innerText = it.word;
+        c.addEventListener('dragstart', e=> e.dataTransfer.setData('text/plain', it.id));
+        wordCards.appendChild(c);
+      });
+    }
+
+    function onDropToSlot(e){
+      const id = e.dataTransfer.getData('text/plain');
+      const slot = e.currentTarget;
+      if(slot.dataset.filled) return;
+      if(id === slot.dataset.id){
+        // correct
+        slot.innerHTML = `<div style='font-size:28px'>${items.find(x=>x.id===id).emoji}<div style='font-size:12px;margin-top:4px'>${items.find(x=>x.id===id).word}</div></div>`;
+        slot.dataset.filled = '1';
+        // remove card
+        const card = [...document.querySelectorAll('.word-card')].find(x=>x.dataset.id===id);
+        if(card) card.remove();
+        matchesDone++;
+        matchFeedback.innerText = `✅ Good! ${matchesDone} / ${items.length}`;
+        playTone('ok');
+        totalScore += 10;
+        updateStatus();
+        if(matchesDone === items.length){ endMatch(true); }
+      } else {
+        matchFeedback.innerText = '❌ Not correct — try again';
+        playTone('bad');
+      }
+    }
+
+    function startMatchRound(){
+      matchesDone = 0; matchTimeLeft = 45; matchFeedback.innerText = 'Go!';
+      renderMatchBoard(); renderWordCards();
+      if(matchTimer) clearInterval(matchTimer);
+      matchTimer = setInterval(()=>{
+        matchTimeLeft--; if(matchTimeLeft<=0){ clearInterval(matchTimer); endMatch(false); }
+      },1000);
+    }
+
+    function endMatch(success){
+      if(matchTimer) clearInterval(matchTimer);
+      if(success){
+        const bonus = Math.max(0, Math.floor(matchTimeLeft/5))*2;
+        totalScore += bonus; matchFeedback.innerText = `🎉 Round complete! Bonus ${bonus} points.`;
+      } else {
+        matchFeedback.innerText = '⏱ Time is up! Try again.';
+      }
+      updateStatus();
+    }
+
+    startMatch.addEventListener('click', startMatchRound);
+    hintBtn.addEventListener('click', ()=>{
+      // reveal first letter of one unmatched card
+      const remaining = [...document.querySelectorAll('.word-card')];
+      if(remaining.length===0) { matchHint.innerText='All done!'; return; }
+      const first = remaining[0];
+      const id = first.dataset.id; const word = items.find(x=>x.id===id).word;
+      matchHint.innerText = `Hint: The word starts with "${word[0]}"`;
+    });
+
+    /***********************
+      GAME 2 — Rescue Mission
+    ************************/
+    const seaArea = document.getElementById('seaArea');
+    const startRescueBtn = document.getElementById('startRescue');
+    const stopRescueBtn = document.getElementById('stopRescue');
+    const rescueMsg = document.getElementById('rescueMsg');
+
+    const animals = [
+      {id:'turtle', emoji:'🐢', q:'What do sea turtles eat?', opts:['Plastic','Seaweed','Rocks'], a:1},
+      {id:'dolphin', emoji:'🐬', q:'Where do dolphins live?', opts:['Desert','Ocean','Mountain'], a:1},
+      {id:'crab', emoji:'🦀', q:'A crab uses its ___ to walk', opts:['wings','legs','fins'], a:1}
+    ];
+
+    let spawnCount = 0;
+
+    function spawnFloating(type){
+      const el = document.createElement('div'); el.className='float';
+      const x = Math.random()*80 + '%'; const y = Math.random()*70 + '%';
+      el.style.left = x; el.style.top = y;
+      if(type==='trash'){
+        const choices = ['🥤','🍬','🧴','🗑️']; el.innerText = choices[Math.floor(Math.random()*choices.length)]; el.style.fontSize='28px';
+        el.addEventListener('click', ()=>{ el.remove(); totalScore += 2; updateStatus(); rescueMsg.innerText='You cleaned trash! +2'; playTone('ok'); });
+      } else {
+        const a = animals[Math.floor(Math.random()*animals.length)]; el.innerText = a.emoji; el.classList.add('animal'); el.style.fontSize='42px';
+        el.addEventListener('click', ()=>{ openQuestionModal(a); el.remove(); });
+      }
+      seaArea.appendChild(el);
+      // simple up-down float animation using CSS, using transitions
+      const dy = (Math.random()*30)+10;
+      let dir = 1; // up/down
+      const move = setInterval(()=>{
+        if(!document.body.contains(el)){ clearInterval(move); return; }
+        const top = parseFloat(el.style.top);
+        let newTop = top + (dir*0.4);
+        if(newTop<0 || newTop>85){ dir *= -1; }
+        el.style.top = newTop + '%';
+      },60);
+      // remove after 12s
+      setTimeout(()=>{ if(document.body.contains(el)) el.remove(); clearInterval(move); },12000);
+    }
+
+    function startRescue(){
+      if(rescueInterval) return; rescueMsg.innerText='Mission started!';
+      rescueInterval = setInterval(()=>{
+        // spawn trash more often than animals
+        spawnCount++;
+        if(Math.random()<0.7) spawnFloating('trash'); else spawnFloating('animal');
+      },900);
+    }
+    function stopRescue(){ if(rescueInterval){ clearInterval(rescueInterval); rescueInterval=null; rescueMsg.innerText='Mission stopped.' }}
+    startRescueBtn.addEventListener('click', startRescue); stopRescueBtn.addEventListener('click', stopRescue);
+
+    function openQuestionModal(animal){
+      const modal = document.getElementById('modal'); const dialog = document.getElementById('modalDialog');
+      dialog.innerHTML = `<h3 style='margin-top:0'>Quiz for ${animal.emoji}</h3><p>${animal.q}</p>` + animal.opts.map((opt,i)=>`<div style='margin:6px 0'><button onclick='answerQuiz(${animal.a}, ${i})'>${opt}</button></div>`).join('');
+      modal.style.display = 'flex';
+    }
+    window.answerQuiz = function(correctIndex, chosen){
+      const modal = document.getElementById('modal');
+      if(chosen === correctIndex){ totalScore += 12; updateStatus(); playTone('ok'); alert('Correct! +12 points'); }
+      else { totalScore += 0; playTone('bad'); alert('Not quite — try to read the question again.'); }
+      modal.style.display='none';
+    }
+
+    // close modal on background click
+    document.getElementById('modal').addEventListener('click', e=>{ if(e.target.id==='modal') e.target.style.display='none' })
+
+    /***********************
+      GAME 3 — Beach Builder
+    ************************/
+    const prompts = [
+      {prompt:'I ___ the beach.', answers:['clean','love','watch'], tiles:['clean','pick up','help','visit','play']},
+      {prompt:'We ___ plastic bottles.', answers:['collect','pick up'], tiles:['collect','throw','read','eat','throw away']},
+      {prompt:'Please ___ the trash.', answers:['pick up','clean'], tiles:['pick up','drop','wash','paint','reuse']}
+    ];
+    let currentPromptIndex = 0;
+    const dropSentence = document.getElementById('dropSentence');
+    const wordTiles = document.getElementById('wordTiles');
+    const sentenceFeedback = document.getElementById('sentenceFeedback');
+    document.getElementById('newPrompt').addEventListener('click', ()=>{ loadPrompt((currentPromptIndex+1)%prompts.length) });
+    document.getElementById('checkSentence').addEventListener('click', checkSentence);
+
+    function loadPrompt(i){
+      currentPromptIndex = i; dropSentence.innerHTML=''; wordTiles.innerHTML=''; sentenceFeedback.innerText='';
+      const data = prompts[i];
+      document.querySelector('#game3 .prompt').innerHTML = `Prompt: <strong>"${data.prompt}"</strong>`;
+      // render tiles shuffled
+      const tiles = shuffle([...data.tiles]);
+      tiles.forEach(t=>{
+        const d = document.createElement('div'); d.className='tile'; d.innerText = t; d.draggable=true; d.addEventListener('dragstart', e=>e.dataTransfer.setData('text/plain', t));
+        d.addEventListener('click', ()=>{ dropSentence.appendChild(d); });
+        wordTiles.appendChild(d);
+      });
+      // drop area
+      dropSentence.addEventListener('dragover', e=>e.preventDefault());
+      dropSentence.addEventListener('drop', e=>{
+        const t = e.dataTransfer.getData('text/plain'); const tile = [...document.querySelectorAll('.tile')].find(x=>x.innerText===t);
+        if(tile) dropSentence.appendChild(tile);
+      });
+    }
+
+    function checkSentence(){
+      const words = Array.from(dropSentence.children).map(n=>n.innerText.toLowerCase());
+      const joined = words.join(' ');
+      const answers = prompts[currentPromptIndex].answers;
+      // simple check: any allowed answer appears in the constructed string
+      const ok = answers.some(a=> joined.includes(a));
+      if(ok){ sentenceFeedback.innerText = '✅ Good sentence! +8 points'; totalScore += 8; playTone('ok'); }
+      else { sentenceFeedback.innerText = '❌ Try a different verb or word'; playTone('bad'); }
+      updateStatus();
+    }
+
+    /***********************
+      TEACHER WORKSHEET
+    ************************/
+    document.getElementById('printWorksheet').addEventListener('click', ()=>{
+      const content = `
+        <html><head><title>Worksheet</title><style>body{font-family:Arial;padding:20px}h2{color:#036280}</style></head><body>
+        <h2>Ocean Protectors — Worksheet</h2>
+        <h3>Vocabulary</h3>
+        <ul>
+          <li>plastic bottle — trash made from plastic</li>
+          <li>coral — a living animal that makes reefs</li>
+          <li>recycle — to use again or make new things from old things</li>
+          <li>habitat — the natural home for animals</li>
+        </ul>
+        <h3>Word Detective — Answers</h3>
+        <p>Match the pictures (answers depend on round data).</p>
+        <h3>Rescue Mission — Sample Questions & Answers</h3>
+        <ul>
+          <li>What do sea turtles eat? — Seaweed</li>
+          <li>Where do dolphins live? — Ocean</li>
+        </ul>
+        <h3>Discussion Prompts</h3>
+        <ol><li>Why is plastic bad for the ocean?</li><li>How can our school reduce trash?</li></ol>
+        </body></html>`;
+      const w = window.open('', '_blank'); w.document.write(content); w.document.close();
+    });
+
+    /***********************
+      Initialization
+    ************************/
+    function init(){
+      renderMatchBoard(); renderWordCards(); loadPrompt(0); updateStatus();
+    }
+    init();
+  </script>
+</body>
+</html>
